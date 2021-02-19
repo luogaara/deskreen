@@ -10,6 +10,7 @@
 ![build-and-test](https://github.com/pavlobu/deskreen/workflows/build%20and%20test/badge.svg)
 ![codecov-generate](https://github.com/pavlobu/deskreen/workflows/codecov/badge.svg)
 [![codecov](https://codecov.io/gh/pavlobu/deskreen/branch/master/graph/badge.svg?token=fqfBlyXT5O)](https://codecov.io/gh/pavlobu/deskreen)
+![platform](https://img.shields.io/badge/platform-Windows%20%7C%20MacOS%20%7C%20Linux-lightgrey)
 
 ### ▶️ [Deskreen Youtube channel](https://www.youtube.com/channel/UCyiTK98gjDKGNNjUk9ynzxQ) (video tutorials, demos, use cases for Deskreen day to day usage)
 
@@ -24,6 +25,20 @@ in `Typescript` and transformed to use `node-forge` instead of `window.crypto.su
 Why this was made? Because a client served with `http` without SSL, which makes `window.crypto.subtle` unavailable.
 
 <br/>
+
+## [Deskreen FAQ](https://deskreen.com/#faq)
+
+<br/>
+
+## Get Started for translators
+
+Want to add a new language support for Deskreen?
+Or you found a typo in existing translations of Deskreen App or website?
+Here are step by step guides:
+
+- [How to add a new language to Deskreen App and Website](doc/translations-docs/how-to-add-new-language-translation-to-Deskreen.md)
+- [How to fix a typo in Deskreen App or Website](doc/translations-docs/fix-a-typo-in-existing-translation-of-Deskreen.md)
+
 <br/>
 
 ## Deskreen Github Discussion Threads
@@ -94,6 +109,8 @@ Thank you in advance!
 
 - Get the .dmg file from Releases
 
+- Or get from [Homebrew](https://brew.sh/): `brew install --cask deskreen`
+
 ### Linux
 
 - Debian and Ubuntu based distributions (deb)
@@ -105,6 +122,8 @@ Thank you in advance!
 - AppImage for other distributions
 
 ## Get Started for Developers
+
+### Run `yarn test-all` locally to make sure you don't have any errors, before submitting your PR
 
 ### Prerequisites
 
@@ -143,6 +162,23 @@ globally on your machine.
 ### Generate test coverage results
 
 `yarn coverage` -- when run from project root, generates a coverage report for `host` and `app/client`
+
+### How to regenerate snapshots if you have tests failing when running `yarn test`?
+
+in root `./` folder of project run this:
+
+```
+yarn jest --updateSnapshot
+```
+
+in Deskreen Viewer `./app/client` folder of project run this:
+
+```
+cd app/client
+SKIP_PREFLIGHT_CHECK=true yarn test:nowatch -- -u
+```
+
+### Run `yarn test-all` locally to make sure you don't have any errors, before submitting your PR
 
 ## Instruction for running a local Sonar Qube, community edition
 
@@ -216,4 +252,5 @@ ISC Copyright (c) 2019, Mapbox [pixelmatch](https://github.com/mapbox/pixelmatch
 ## Donate
 
 [Click to donate on Deskreen's Patreon page](https://patreon.com/deskreen)
+
 [Click to donate on Deskreen's Opencollective page](https://opencollective.com/deskreen)

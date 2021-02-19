@@ -19,6 +19,7 @@ import {
   Toaster,
   Intent,
 } from '@blueprintjs/core';
+import { useTranslation } from 'react-i18next';
 import FullScreenEnter from '../../images/fullscreen_24px.svg';
 import FullScreenExit from '../../images/fullscreen_exit-24px.svg';
 import RedHeartTwemojiPNG from '../../images/red_heart_2764_twemoji_120x120.png';
@@ -28,6 +29,7 @@ import { VideoQuality } from '../../features/VideoAutoQualityOptimizer/VideoQual
 import handlePlayerToggleFullscreen from './handlePlayerToggleFullscreen';
 import initScreenfullOnChange from './initScreenfullOnChange';
 import ScreenSharingSource from '../../features/PeerConnection/ScreenSharingSourceEnum';
+import { REACT_PLAYER_WRAPPER_ID } from '../../constants/appConstants';
 
 const videoQualityButtonStyle: React.CSSProperties = {
   width: '100%',
@@ -46,7 +48,10 @@ interface PlayerControlPanelProps {
   toaster: undefined | Toaster;
 }
 
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
 function PlayerControlPanel(props: PlayerControlPanelProps) {
+  const { t } = useTranslation();
   const {
     isPlaying,
     onSwitchChangedCallback,
@@ -62,6 +67,7 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
   const isFullScreenAPIAvailable = useMemo(() => screenfull.isEnabled, []);
 
   const [isFullScreenOn, setIsFullScreenOn] = useState(false);
+  const [isVideoFlipped, setIsVideoFlipped] = useState(false);
 
   useEffect(() => {
     initScreenfullOnChange(setIsFullScreenOn);
@@ -71,13 +77,34 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
     handlePlayerToggleFullscreen();
   }, []);
 
+  const toggleFlipVideo = useCallback(() => {
+    const videoElement = isSafari
+      ? document.querySelector(`#${REACT_PLAYER_WRAPPER_ID}`)
+      : document.querySelector(`#${REACT_PLAYER_WRAPPER_ID} > video`);
+    if (isVideoFlipped) {
+      // @ts-ignore
+      videoElement.style.transform = '';
+      setIsVideoFlipped(false);
+    } else {
+      // @ts-ignore
+      videoElement.style.transform = 'rotateY(180deg)';
+      setIsVideoFlipped(true);
+    }
+
+    toaster?.show({
+      icon: 'clean',
+      intent: Intent.PRIMARY,
+      message: t('Video is flipped horizontally'),
+    });
+  }, [isVideoFlipped, toaster, t]);
+
   return (
     <>
       <Card elevation={4}>
         <Row between="xs" middle="xs">
           <Col xs={12} md={3}>
             <Tooltip
-              content="Click to visit our website"
+              content={t('Click to visit our website')}
               position={Position.BOTTOM}
             >
               <Button
@@ -102,7 +129,9 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
               </Button>
             </Tooltip>
             <Tooltip
-              content="If you like Deskreen, consider donating! Deskreen is free and opensource forever! You can help us to make Deskreen even better!"
+              content={t(
+                'If you like Deskreen consider contributing financially Deskreen is open-source Your donations keep us motivated to make Deskreen even better'
+              )}
               position={Position.BOTTOM}
             >
               <Button
@@ -125,7 +154,7 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
                     <div
                       style={{ transform: 'translateY(2px) translateX(-5px)' }}
                     >
-                      <Text>Donate!</Text>
+                      <Text>{t('Donate')}</Text>
                     </div>
                   </Col>
                 </Row>
@@ -153,8 +182,8 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
                         icon: isPlaying ? 'pause' : 'play',
                         intent: Intent.PRIMARY,
                         message: isPlaying
-                          ? 'Video stream is paused.'
-                          : 'Video stream is playing',
+                          ? t('Video stream is paused')
+                          : t('Video stream is playing'),
                       });
                     }}
                     style={{
@@ -172,7 +201,7 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
                       </Col>
                       <Col xs>
                         <Text className="bp3-text-large">
-                          {isPlaying ? 'Pause' : 'Play'}
+                          {isPlaying ? t('Pause') : t('Play')}
                         </Text>
                       </Col>
                     </Row>
@@ -184,59 +213,60 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
                       borderBottom: '1px solid #ffffffa8',
                     }}
                   />
-                  {screenSharingSourceType === ScreenSharingSource.WINDOW ? (
-                    <Tooltip
-                      content="You can't change video quality when sharing a window. You can change quality only when shering entire screen."
-                      position={Position.BOTTOM}
-                    >
-                      <Button minimal disabled>
-                        <Icon icon="cog" color="#A7B6C2" />
+                  <Popover
+                    content={
+                      <>
+                        <H5>{`${t('Video Settings')}:`}</H5>
+                        <Divider />
+                        <Row>
+                          <Button
+                            icon="key-tab"
+                            minimal
+                            active={isVideoFlipped}
+                            style={videoQualityButtonStyle}
+                            onClick={toggleFlipVideo}
+                          >
+                            {t('Flip')}
+                          </Button>
+                        </Row>
+                        <Divider />
+                        {Object.values(VideoQuality).map((q: VideoQuality) => {
+                          return (
+                            <Row key={q}>
+                              <Button
+                                minimal
+                                active={selectedVideoQuality === q}
+                                style={videoQualityButtonStyle}
+                                disabled={
+                                  screenSharingSourceType ===
+                                  ScreenSharingSource.WINDOW
+                                }
+                                onClick={() => {
+                                  setVideoQuality(q);
+                                  toaster?.show({
+                                    icon: 'clean',
+                                    intent: Intent.PRIMARY,
+                                    message: `${t('Video quality has been changed to')} ${q}`,
+                                  });
+                                }}
+                              >
+                                {q}
+                              </Button>
+                            </Row>
+                          );
+                        })}
+                      </>
+                    }
+                    position={Position.BOTTOM}
+                    popoverClassName={Classes.POPOVER_CONTENT_SIZING}
+                  >
+                    <Tooltip content={t('Click to Open Video Settings')} position={Position.BOTTOM}>
+                      <Button minimal>
+                        <Icon icon="cog" color="white" />
                       </Button>
                     </Tooltip>
-                  ) : (
-                    <Popover
-                      content={
-                        <>
-                          <H5>Video Quality:</H5>
-                          <Divider />
-                          {Object.values(VideoQuality).map(
-                            (q: VideoQuality) => {
-                              return (
-                                <Row key={q}>
-                                  <Button
-                                    minimal
-                                    active={selectedVideoQuality === q}
-                                    style={videoQualityButtonStyle}
-                                    onClick={() => {
-                                      setVideoQuality(q);
-                                      toaster?.show({
-                                        icon: 'clean',
-                                        intent: Intent.PRIMARY,
-                                        message: `Video quality has been changed to ${q}`,
-                                      });
-                                    }}
-                                  >
-                                    {q}
-                                  </Button>
-                                </Row>
-                              );
-                            }
-                          )}
-                        </>
-                      }
-                      position={Position.BOTTOM}
-                      popoverClassName={Classes.POPOVER_CONTENT_SIZING}
-                    >
-                      <Tooltip
-                        content="Video Quality"
-                        position={Position.BOTTOM}
-                      >
-                        <Button minimal>
-                          <Icon icon="cog" color="white" />
-                        </Button>
-                      </Tooltip>
-                    </Popover>
-                  )}
+                  </Popover>
+
                   <Divider
                     style={{
                       height: '20px',
@@ -245,7 +275,7 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
                     }}
                   />
                   <Tooltip
-                    content="Enter Full Screen Mode"
+                    content={t('Click to Enter Full Screen Mode')}
                     position={Position.BOTTOM}
                   >
                     <Button
@@ -284,14 +314,14 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
                     toaster?.show({
                       icon: 'video',
                       intent: Intent.PRIMARY,
-                      message: `Default video player has been turned ${
-                        isDefaultPlayerTurnedOn ? 'OFF' : 'ON'
+                      message: `${
+                        isDefaultPlayerTurnedOn ? t('Default video player has been turned OFF') : t('Default video player has been turned ON')
                       }`,
                     });
                   }}
-                  innerLabel={isDefaultPlayerTurnedOn ? 'ON' : 'OFF'}
+                  innerLabel={isDefaultPlayerTurnedOn ? t('ON') : t('OFF')}
                   inline
-                  label={`Default Video Player`}
+                  label={t('Default Video Player')}
                   alignIndicator={Alignment.RIGHT}
                   checked={isDefaultPlayerTurnedOn}
                   disabled={!isFullScreenAPIAvailable}
